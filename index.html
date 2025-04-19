@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Gateway</title>
+    <meta name="description" content="Secure link gateway with ads">
+    <link rel="icon" href="data:,">
+    <style>
+        :root {
+            --primary-color: #9c27b0;
+            --secondary-color: #7b1fa2;
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --container-bg: #1e1e1e;
+            --premium-color: #ff9800;
+            --ad-bg: #252525;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            padding: 15px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: var(--container-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .ad-container {
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .ad-placeholder {
+            background-color: var(--ad-bg);
+            color: #666;
+            padding: 1rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0.5rem 0;
+        }
+        
+        .link-display {
+            margin: 2rem 0;
+            text-align: center;
+        }
+        
+        .countdown {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin: 1rem 0;
+            font-weight: bold;
+        }
+        
+        .generated-link {
+            color: var(--premium-color);
+            font-size: 1.1rem;
+            word-break: break-all;
+            padding: 1.2rem;
+            margin: 1.2rem 0;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border: 1px solid #333;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .open-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.8rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            margin: 1rem 0;
+            cursor: pointer;
+            width: 100%;
+            max-width: 220px;
+            transition: all 0.3s ease;
+        }
+        
+        .open-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-top: 1.5rem;
+        }
+        
+        /* Responsive ads */
+        .ad-leaderboard {
+            min-height: 90px;
+        }
+        
+        .ad-medium {
+            min-height: 250px;
+        }
+        
+        .ad-video {
+            min-height: 200px;
+            aspect-ratio: 16/9;
+        }
+        
+        /* Desktop styles */
+        @media (min-width: 768px) {
+            body {
+                padding: 2rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .container {
+                max-width: 800px;
+                padding: 2.5rem;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .ad-leaderboard {
+                min-height: 90px;
+            }
+            
+            .ad-medium {
+                min-height: 250px;
+            }
+            
+            .ad-video {
+                min-height: 360px;
+            }
+            
+            .countdown {
+                font-size: 2.8rem;
+            }
+            
+            .generated-link {
+                font-size: 1.2rem;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Secure Link Gateway</h1>
+        
+        <!-- Ad Space 1 (Leaderboard) -->
+        <div class="ad-container">
+            <div class="ad-placeholder ad-leaderboard" id="ad-leaderboard">
+                Leaderboard Ad (728x90)
+            </div>
+        </div>
+        
+        <!-- Ad Space 2 (Medium Rectangle) -->
+        <div class="ad-container">
+            <div class="ad-placeholder ad-medium" id="ad-medium">
+                Medium Rectangle (300x250)
+            </div>
+        </div>
+        
+        <!-- Video Ad Space -->
+        <div class="ad-container">
+            <div class="ad-placeholder ad-video" id="ad-video">
+                Video Ad (16:9)
+            </div>
+        </div>
+        
+        <!-- Link Display Area -->
+        <div class="link-display">
+            <div class="countdown" id="countdown">5</div>
+            <p>Preparing your secure link...</p>
+            <div class="generated-link" id="generated-link">
+                Verifying access credentials...
+            </div>
+            <button class="open-btn" id="open-btn" style="display:none;">Open Secure Link</button>
+            <div class="status" id="status">
+                Initializing connection...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const countdownEl = document.getElementById('countdown');
+            const generatedLinkEl = document.getElementById('generated-link');
+            const openBtn = document.getElementById('open-btn');
+            const statusEl = document.getElementById('status');
+            
+            // Configuration
+            const config = {
+                countdownDuration: 5, // seconds
+                finalUrl: "https://your-final-destination.com", // CHANGE THIS
+                enableAutoRedirect: false
+            };
+            
+            // Detect device and browser info
+            const deviceInfo = {
+                isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+                browser: getBrowser(),
+                os: getOS(),
+                referrer: document.referrer || 'direct'
+            };
+            
+            // Get source from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const source = urlParams.get('source') || 
+                          urlParams.get('ref') || 
+                          urlParams.get('utm_source') || 
+                          deviceInfo.referrer.replace('www.', '').split('/')[2] || 
+                          'direct';
+            
+            // Update status
+            updateStatus();
+            
+            // Start countdown
+            startCountdown();
+            
+            function updateStatus() {
+                statusEl.textContent = `Device: ${deviceInfo.isMobile ? 'Mobile' : 'Desktop'} | ` +
+                                      `Source: ${source} | ` +
+                                      `Browser: ${deviceInfo.browser}`;
+            }
+            
+            function startCountdown() {
+                let seconds = config.countdownDuration;
+                countdownEl.textContent = seconds;
+                
+                const timer = setInterval(function() {
+                    seconds--;
+                    countdownEl.textContent = seconds;
+                    
+                    if (seconds <= 0) {
+                        clearInterval(timer);
+                        showFinalLink();
+                    }
+                }, 1000);
+            }
+            
+            function showFinalLink() {
+                generatedLinkEl.textContent = config.finalUrl;
+                openBtn.style.display = 'inline-block';
+                
+                openBtn.addEventListener('click', function() {
+                    window.open(config.finalUrl, '_blank');
+                });
+                
+                if (config.enableAutoRedirect) {
+                    setTimeout(function() {
+                        window.location.href = config.finalUrl;
+                    }, 2000);
+                }
+            }
+            
+            // Helper functions
+            function getBrowser() {
+                const userAgent = navigator.userAgent;
+                if (userAgent.includes("Firefox")) return "Firefox";
+                if (userAgent.includes("SamsungBrowser")) return "Samsung Browser";
+                if (userAgent.includes("Opera") || userAgent.includes("OPR")) return "Opera";
+                if (userAgent.includes("Trident")) return "IE";
+                if (userAgent.includes("Edge")) return "Edge";
+                if (userAgent.includes("Chrome")) return "Chrome";
+                if (userAgent.includes("Safari")) return "Safari";
+                return "Unknown";
+            }
+            
+            function getOS() {
+                const userAgent = navigator.userAgent;
+                if (userAgent.includes("Android")) return "Android";
+                if (userAgent.includes("iPhone") || userAgent.includes("iPad") || userAgent.includes("iPod")) return "iOS";
+                if (userAgent.includes("Windows")) return "Windows";
+                if (userAgent.includes("Mac")) return "MacOS";
+                if (userAgent.includes("Linux")) return "Linux";
+                return "Unknown";
+            }
+            
+            // Initialize ad spaces (placeholder - replace with actual ad code)
+            function initAdSpaces() {
+                const adSpaces = [
+                    { id: 'ad-leaderboard', type: 'banner', size: '728x90' },
+                    { id: 'ad-medium', type: 'banner', size: '300x250' },
+                    { id: 'ad-video', type: 'video', size: '16:9' }
+                ];
+                
+                adSpaces.forEach(ad => {
+                    const element = document.getElementById(ad.id);
+                    element.setAttribute('data-ad-loaded', 'true');
+                    element.setAttribute('data-ad-type', ad.type);
+                    element.setAttribute('data-ad-size', ad.size);
+                });
+            }
+            
+            initAdSpaces();
+        });
+    </script>
+</body>
+</html>
